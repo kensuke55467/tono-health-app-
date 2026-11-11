@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>遠野市 健康づくり運動教室</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti for Celebration Effects -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+            },
+            accent: {
+              50: '#fff7ed',
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 高齢者配慮のフォント設定・タップ領域・アニメーション */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .touch-target {
+      min-height: 52px;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+    @keyframes spin-roulette {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(1440deg); }
+    }
+    .spin-animation {
+      animation: spin-roulette 3s cubic-bezier(0.15, 0.9, 0.2, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-stone-100 text-stone-900 pb-28 antialiased selection:bg-brand-100">
+
+  <!-- LIFF風 モバイルフレーム（スマホ画面最適化） -->
+  <div class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col relative overflow-hidden">
+
+    <!-- 1. LIFF公式ヘッダー -->
+    <header class="bg-brand-600 text-white px-4 py-3 sticky top-0 z-40 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="bg-white p-1 rounded-full text-brand-600">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-brand-100 tracking-wider">遠野市 × 株式会社ぴーぷる</div>
+            <h1 class="text-lg font-bold leading-tight">健康づくり運動教室</h1>
+          </div>
+        </div>
+        <!-- LINE風の閉じる/戻るボタン模擬 -->
+        <div class="flex items-center space-x-1 text-white opacity-90">
+          <button onclick="showToast('LINEトーク画面へ戻る想定です')" class="p-1 hover:bg-brand-700 rounded-full">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ領域（タブ切り替え） -->
+    <main class="flex-1 p-4 overflow-y-auto">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: ホーム・スタンプ・くじ引き -->
+      <!-- ============================================== -->
+      <section id="tab-home" class="space-y-5">
+        
+        <!-- 受講者ウェルカム情報 -->
+        <div class="bg-gradient-to-r from-brand-50 to-emerald-50 border border-brand-200 rounded-2xl p-4 shadow-sm">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-bold text-brand-700 bg-brand-100 px-2 py-0.5 rounded-full">地区会場コース参加中</span>
+            <span class="text-xs text-stone-500">遠野 太郎 さん</span>
+          </div>
+          <div class="text-base font-bold text-stone-800">今日も元気に健康づくり！</div>
+          <p class="text-xs text-stone-600 mt-1">教室に参加してQRを読み取るとスタンプが貯まります。</p>
+        </div>
+
+        <!-- 5回参加スタンプカード -->
+        <div class="bg-white border-2 border-brand-500 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h2 class="text-base font-extrabold text-stone-800 flex items-center">
+                <i data-lucide="award" class="w-5 h-5 text-accent-500 mr-1.5"></i>
+                教室参加スタンプカード
+              </h2>
+              <p class="text-xs text-stone-500">5回参加で「遠野お楽しみくじ」が引けます！</p>
+            </div>
+            <span id="stamp-count-badge" class="bg-accent-500 text-white font-bold text-xs px-2.5 py-1 rounded-full shadow">
+              現在: 0/5 個
+            </span>
+          </div>
+
+          <!-- スタンプスロット（5マス） -->
+          <div class="grid grid-cols-5 gap-2 my-2" id="stamp-slots-container">
+            <!-- JSで動的レンダリング -->
+          </div>
+
+          <!-- くじ引き実行ボタン（5マス達成時のみアクティブ） -->
+          <div class="mt-4 pt-3 border-t border-stone-200">
+            <button id="lottery-btn" onclick="openLotteryModal()" disabled
+              class="w-full touch-target bg-stone-300 text-stone-500 font-bold text-base rounded-xl flex items-center justify-center space-x-2 transition duration-200 shadow">
+              <i data-lucide="gift" class="w-6 h-6"></i>
+              <span>5個ためて お楽しみくじを引く</span>
+            </button>
+            <p id="lottery-hint" class="text-center text-xs text-stone-500 mt-2 font-medium">
+              あと <span id="remain-stamps" class="text-accent-600 font-bold text-sm">5</span> 回教室に参加すると引けます
+            </p>
+          </div>
+        </div>
+
+        <!-- 受付QRスキャナー・シミュレーター -->
+        <div class="bg-stone-50 border border-stone-300 rounded-2xl p-4 text-center">
+          <div class="inline-flex p-3 bg-white rounded-full shadow-sm text-brand-600 mb-2">
+            <i data-lucide="qr-code" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-base font-bold text-stone-800">教室の受付QRコードを読み取る</h3>
+          <p class="text-xs text-stone-600 mt-1 mb-4">会場に設置してあるQRコードにかざしてスタンプを獲得！</p>
+          
+          <button onclick="triggerQRScanSimulation()" class="w-full touch-target bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-lg rounded-xl shadow-lg flex items-center justify-center space-x-2 transition">
+            <i data-lucide="camera" class="w-6 h-6"></i>
+            <span>QRコードを読み取る</span>
+          </button>
+        </div>
+
+        <!-- 次回教室のリマインドバナー -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-xl flex items-start space-x-3">
+          <i data-lucide="calendar-clock" class="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5"></i>
+          <div>
+            <div class="text-xs font-bold text-amber-800">【次回のリマインド】</div>
+            <div class="text-sm font-bold text-stone-800">次回：11月18日(水) 10:00〜</div>
+            <div class="text-xs text-stone-600">会場：遠野地区センター体育室（水分補給の飲み物とタオルをお持ちください）</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: カレンダー・日々の記録 -->
+      <!-- ============================================== -->
+      <section id="tab-calendar" class="space-y-5 hidden">
+        
+        <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-stone-800 flex items-center">
+              <i data-lucide="calendar" class="w-5 h-5 text-brand-600 mr-1.5"></i>
+              <span id="calendar-month-title">2026年 11月</span>の記録
+            </h2>
+            <span class="text-xs font-semibold text-brand-700 bg-brand-50 px-2 py-1 rounded">今月の達成: <span id="month-achieved-count" class="font-bold text-sm">0</span> 日</span>
+          </div>
+
+          <!-- カレンダーグリッド -->
+          <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-stone-500 mb-2">
+            <div class="text-rose-500">日</div>
+            <div>月</div>
+            <div>火</div>
+            <div>水</div>
+            <div>木</div>
+            <div>金</div>
+            <div class="text-blue-500">土</div>
+          </div>
+          <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+            <!-- JSで動的生成 -->
+          </div>
+          
+          <div class="flex items-center justify-center space-x-4 mt-3 pt-2 border-t border-stone-100 text-xs text-stone-500">
+            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-brand-500 inline-block mr-1"></span>達成日</span>
+            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-accent-500 inline-block mr-1"></span>教室参加日</span>
+          </div>
+        </div>
+
+        <!-- 日々の簡単ワンタップ記録ボタン -->
+        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-4">
+          <h3 class="text-sm font-bold text-stone-800 mb-1">本日の健康チェック（ワンタップ記録）</h3>
+          <p class="text-xs text-stone-500 mb-3">できた項目をタップしてカレンダーに記録しましょう！</p>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <button id="btn-record-walk" onclick="toggleDailyRecord('walk')" 
+              class="touch-target p-3 bg-white border-2 border-stone-200 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow-sm">
+              <span class="text-2xl mb-1">👟</span>
+              <span class="text-sm font-bold text-stone-800">1,000歩 歩いた！</span>
+              <span id="label-walk-status" class="text-xs text-stone-400 font-semibold mt-1">未記録</span>
+            </button>
+            <button id="btn-record-exercise" onclick="toggleDailyRecord('exercise')" 
+              class="touch-target p-3 bg-white border-2 border-stone-200 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow-sm">
+              <span class="text-2xl mb-1">🧘</span>
+              <span class="text-sm font-bold text-stone-800">自宅で体操した！</span>
+              <span id="label-exercise-status" class="text-xs text-stone-400 font-semibold mt-1">未記録</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 選択日の運動振り返りメモ詳細 -->
+        <div id="selected-day-detail" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span id="detail-date" class="text-sm font-bold text-emerald-800">日付をタップすると詳細が表示されます</span>
+            <span id="detail-tag" class="text-xs bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded font-bold hidden">教室受講日</span>
+          </div>
+          <div id="detail-content" class="text-xs text-stone-700 leading-relaxed mt-2">
+            カレンダーの日付をタップすると、その日に行った運動内容（ラダー運動のステップ、下半身ストレッチなど）の振り返りメモが確認できます。
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: みんなの広場（交流・仲間づくり） -->
+      <!-- ============================================== -->
+      <section id="tab-community" class="space-y-4 hidden">
+        
+        <!-- 会場みんなの合計歩数メーター -->
+        <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-bold text-accent-600">遠野会場 みんなの目標</span>
+            <span class="text-xs font-bold text-stone-600">今月の累計: 48,200 / 60,000歩</span>
+          </div>
+          <div class="w-full bg-stone-200 rounded-full h-3 overflow-hidden">
+            <div class="bg-accent-500 h-3 rounded-full transition-all duration-500" style="width: 80%"></div>
+          </div>
+          <p class="text-xs text-stone-500 mt-2">みんなの日常の歩行が合算されています。目標達成まであと少し！</p>
+        </div>
+
+        <!-- 簡単ワンタップ投稿エリア -->
+        <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+          <h2 class="text-sm font-bold text-stone-800 mb-1 flex items-center">
+            <i data-lucide="message-square-plus" class="w-4 h-4 text-brand-600 mr-1.5"></i>
+            ワンタップで仲間にお知らせ
+          </h2>
+          <p class="text-xs text-stone-500 mb-3">文字入力なしで、ボタンを押すだけで投稿できます！</p>
+          
+          <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+            <button onclick="postPresetComment('👟 今日も1,000歩達成しました！')" class="touch-target p-2.5 bg-stone-100 hover:bg-brand-50 border border-stone-200 rounded-xl text-stone-800 active:scale-95 transition text-left flex items-center space-x-1.5">
+              <span>👟</span>
+              <span>1000歩達成！</span>
+            </button>
+            <button onclick="postPresetComment('🌳 遠野駅前まで散歩してきました！')" class="touch-target p-2.5 bg-stone-100 hover:bg-brand-50 border border-stone-200 rounded-xl text-stone-800 active:scale-95 transition text-left flex items-center space-x-1.5">
+              <span>🌳</span>
+              <span>駅前までお散歩</span>
+            </button>
+            <button onclick="postPresetComment('🥗 今日もしっかり野菜を食べました！')" class="touch-target p-2.5 bg-stone-100 hover:bg-brand-50 border border-stone-200 rounded-xl text-stone-800 active:scale-95 transition text-left flex items-center space-x-1.5">
+              <span>🥗</span>
+              <span>野菜食べたよ</span>
+            </button>
+            <button onclick="postPresetComment('💪 自宅でラダー運動を復習しました！')" class="touch-target p-2.5 bg-stone-100 hover:bg-brand-50 border border-stone-200 rounded-xl text-stone-800 active:scale-95 transition text-left flex items-center space-x-1.5">
+              <span>💪</span>
+              <span>ラダー運動復習</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 投稿タイムライン -->
+        <div class="space-y-3" id="community-timeline">
+          <!-- JSで動的描画 -->
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: 動画・復習ガイド -->
+      <!-- ============================================== -->
+      <section id="tab-videos" class="space-y-4 hidden">
+        
+        <div class="bg-brand-50 border border-brand-200 rounded-2xl p-4">
+          <h2 class="text-base font-bold text-brand-900 flex items-center">
+            <i data-lucide="play-circle" class="w-5 h-5 text-brand-600 mr-1.5"></i>
+            運動教室の復習ワンポイント動画
+          </h2>
+          <p class="text-xs text-stone-600 mt-1">教室で習ったステップやストレッチを、自宅でも1日1分見直してみましょう！</p>
+        </div>
+
+        <!-- 動画カード1: ラダー運動 -->
+        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+          <div class="bg-stone-800 text-white p-4 relative aspect-video flex flex-col items-center justify-center text-center">
+            <!-- 擬似再生プレビュー枠 -->
+            <div class="w-14 h-14 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center cursor-pointer transition active:scale-90" onclick="showToast('動画再生シミュレーター: ラダー基本ステップ')">
+              <i data-lucide="play" class="w-8 h-8 text-white fill-white ml-1"></i>
+            </div>
+            <span class="text-xs text-stone-300 mt-2 font-medium">再生時間: 1分30秒</span>
+            <span class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">健康運動指導士 監修</span>
+          </div>
+          <div class="p-3">
+            <div class="flex items-center space-x-1 text-xs text-brand-600 font-bold mb-0.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>転倒予防・介護予防</span>
+            </div>
+            <h3 class="text-base font-bold text-stone-800">【ラダー運動】基本の2イン・2アウト</h3>
+            <p class="text-xs text-stone-600 mt-1">マスの中に両足を入れてから外へ出す基本のリズム。手拍子を合わせるとさらに脳の活性化につながります。</p>
+          </div>
+        </div>
+
+        <!-- 動画カード2: 椅子ストレッチ -->
+        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+          <div class="bg-stone-800 text-white p-4 relative aspect-video flex flex-col items-center justify-center text-center">
+            <div class="w-14 h-14 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center cursor-pointer transition active:scale-90" onclick="showToast('動画再生シミュレーター: 椅子に座って下半身伸ばし')">
+              <i data-lucide="play" class="w-8 h-8 text-white fill-white ml-1"></i>
+            </div>
+            <span class="text-xs text-stone-300 mt-2 font-medium">再生時間: 2分00秒</span>
+            <span class="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">管理栄養士 豆知識付き</span>
+          </div>
+          <div class="p-3">
+            <div class="flex items-center space-x-1 text-xs text-brand-600 font-bold mb-0.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>膝痛・腰痛の予防</span>
+            </div>
+            <h3 class="text-base font-bold text-stone-800">【自宅でできる】椅子に座ったまま太もも伸ばし</h3>
+            <p class="text-xs text-stone-600 mt-1">テレビを見ながらでも行える安全な下半身ストレッチ。呼吸を止めずにゆっくり伸ばしましょう。</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: 月1アンケート（Googleフォーム風） -->
+      <!-- ============================================== -->
+      <section id="tab-survey" class="space-y-4 hidden">
+        
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">月1回 定期アンケート</span>
+            <span class="text-xs text-accent-600 font-bold">🎁 回答でスタンプ＋1個</span>
+          </div>
+          <h2 class="text-base font-bold text-stone-800 mt-1">遠野市 教室満足度アンケート</h2>
+          <p class="text-xs text-stone-600 mt-1">
+            皆様の声をもとに、より楽しく続けられる運動教室を作ります。1分程度で終わりますのでご協力をお願いいたします。
+          </p>
+        </div>
+
+        <form id="monthly-survey-form" onsubmit="submitSurvey(event)" class="bg-white border border-stone-200 rounded-2xl p-4 space-y-4 shadow-sm text-sm">
+          
+          <!-- 設問1 -->
+          <div>
+            <label class="block font-bold text-stone-800 mb-1.5">
+              質問1. 最近の運動教室の満足度はいかがですか？ <span class="text-rose-500 font-bold">*</span>
+            </label>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-center space-x-2.5 p-2 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer">
+                <input type="radio" name="satisfaction" value="大変満足" required class="w-4 h-4 text-brand-600 focus:ring-brand-500">
+                <span>😊 大変満足（楽しい・体が軽くなった）</span>
+              </label>
+              <label class="flex items-center space-x-2.5 p-2 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer">
+                <input type="radio" name="satisfaction" value="満足" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
+                <span>🙂 満足（続けられている）</span>
+              </label>
+              <label class="flex items-center space-x-2.5 p-2 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer">
+                <input type="radio" name="satisfaction" value="普通" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
+                <span>😐 普通</span>
+              </label>
+              <label class="flex items-center space-x-2.5 p-2 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer">
+                <input type="radio" name="satisfaction" value="少し不満" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
+                <span>🙁 少し運動がきつい・ついていけない</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 設問2 -->
+          <div>
+            <label class="block font-bold text-stone-800 mb-1.5">
+              質問2. 今後やってみたい運動や気になる内容はありますか？（複数可）
+            </label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label class="flex items-center space-x-2 p-2 border rounded-lg border-stone-200 hover:bg-stone-50">
+                <input type="checkbox" name="interests" value="リズム体操" class="w-4 h-4 text-brand-600 rounded">
+                <span>音楽に合わせた体操</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 border rounded-lg border-stone-200 hover:bg-stone-50">
+                <input type="checkbox" name="interests" value="筋力アップ" class="w-4 h-4 text-brand-600 rounded">
+                <span>足腰の筋力強化</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 border rounded-lg border-stone-200 hover:bg-stone-50">
+                <input type="checkbox" name="interests" value="栄養相談" class="w-4 h-4 text-brand-600 rounded">
+                <span>減塩・食事のアドバイス</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 border rounded-lg border-stone-200 hover:bg-stone-50">
+                <input type="checkbox" name="interests" value="おしゃべり交流" class="w-4 h-4 text-brand-600 rounded">
+                <span>参加者同士のお茶会</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 設問3 -->
+          <div>
+            <label class="block font-bold text-stone-800 mb-1.5">
+              質問3. 教室へのご要望・先生へのメッセージ（任意）
+            </label>
+            <textarea name="comment" rows="3" placeholder="「冬場も無理なく通える工夫がほしい」「ラダーが楽しかった」等ご自由にどうぞ"
+              class="w-full text-xs p-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+          </div>
+
+          <button type="submit" class="w-full touch-target bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-base rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+            <i data-lucide="send" class="w-5 h-5"></i>
+            <span>アンケートを送信する</span>
+          </button>
+        </form>
+
+      </section>
+
+    </main>
+
+    <!-- 下部タブナビゲーション（押しやすい大型タブ） -->
+    <nav class="bg-white border-t border-stone-200 fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 px-2 py-1 flex justify-around items-center shadow-lg">
+      <button onclick="switchTab('home')" id="nav-btn-home" class="flex-1 py-1 flex flex-col items-center text-brand-600 transition">
+        <i data-lucide="home" class="w-6 h-6"></i>
+        <span class="text-[11px] font-bold mt-0.5">ホーム</span>
+      </button>
+      <button onclick="switchTab('calendar')" id="nav-btn-calendar" class="flex-1 py-1 flex flex-col items-center text-stone-400 hover:text-stone-700 transition">
+        <i data-lucide="calendar" class="w-6 h-6"></i>
+        <span class="text-[11px] font-bold mt-0.5">記録・メモ</span>
+      </button>
+      <button onclick="switchTab('community')" id="nav-btn-community" class="flex-1 py-1 flex flex-col items-center text-stone-400 hover:text-stone-700 transition">
+        <i data-lucide="users" class="w-6 h-6"></i>
+        <span class="text-[11px] font-bold mt-0.5">広場</span>
+      </button>
+      <button onclick="switchTab('videos')" id="nav-btn-videos" class="flex-1 py-1 flex flex-col items-center text-stone-400 hover:text-stone-700 transition">
+        <i data-lucide="tv" class="w-6 h-6"></i>
+        <span class="text-[11px] font-bold mt-0.5">動画</span>
+      </button>
+      <button onclick="switchTab('survey')" id="nav-btn-survey" class="flex-1 py-1 flex flex-col items-center text-stone-400 hover:text-stone-700 transition">
+        <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+        <span class="text-[11px] font-bold mt-0.5">アンケート</span>
+      </button>
+    </nav>
+
+    <!-- ============================================== -->
+    <!-- モーダル1: お楽しみくじ引き（ルーレット/ガチャ演出） -->
+    <!-- ============================================== -->
+    <div id="lottery-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center relative shadow-2xl animate-pulse-subtle">
+        
+        <div class="inline-block p-3 bg-amber-100 rounded-full text-amber-600 mb-2">
+          <i data-lucide="sparkles" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-black text-stone-800">遠野健康づくり お楽しみくじ</h3>
+        <p class="text-xs text-stone-500 mt-1 mb-4">5回参加達成おめでとうございます！ボタンを押してくじを引いてください。</p>
+
+        <!-- ルーレット風アイコン回転演出領域 -->
+        <div class="my-4 p-6 bg-stone-50 border-2 border-dashed border-accent-500 rounded-2xl flex flex-col items-center justify-center min-h-[160px]">
+          <div id="lottery-roulette-icon" class="text-6xl transition-transform duration-300">
+            🎁
+          </div>
+          <div id="lottery-status-text" class="text-sm font-bold text-stone-700 mt-3">
+            何が当たるかお楽しみ！
+          </div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div id="lottery-action-area">
+          <button id="btn-spin-lottery" onclick="executeLotterySpin()" class="w-full touch-target bg-accent-500 hover:bg-accent-600 active:scale-95 text-white font-black text-lg rounded-xl shadow-lg transition">
+            くじを引く！
+          </button>
+        </div>
+
+        <button onclick="closeLotteryModal()" class="mt-4 text-xs font-bold text-stone-400 underline">
+          閉じる
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- モーダル2: QRコード読み取りシミュレーター -->
+    <!-- ============================================== -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center relative shadow-2xl">
+        <h3 class="text-lg font-bold text-stone-800 mb-1 flex items-center justify-center">
+          <i data-lucide="scan" class="w-5 h-5 text-brand-600 mr-1.5"></i>
+          会場受付QR読み取り
+        </h3>
+        <p class="text-xs text-stone-500 mb-4">教室会場の受付に設置されたQRコードを枠内に合わせてください</p>
+
+        <!-- カメラ枠模擬 -->
+        <div class="relative w-48 h-48 mx-auto bg-stone-900 rounded-2xl overflow-hidden flex items-center justify-center border-4 border-brand-500 mb-4 shadow-inner">
+          <div class="absolute inset-4 border border-white/50 border-dashed rounded-lg animate-pulse"></div>
+          <i data-lucide="qr-code" class="w-24 h-24 text-white/70"></i>
+        </div>
+
+        <button onclick="completeQRScanSuccess()" class="w-full touch-target bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-base rounded-xl shadow-md transition mb-2">
+          【シミュレート】QRを認識する
+        </button>
+        <button onclick="closeQRModal()" class="w-full py-2 text-xs font-bold text-stone-500">
+          キャンセル
+        </button>
+      </div>
+    </div>
+
+    <!-- 通知トースト -->
+    <div id="toast-msg" class="fixed top-16 left-1/2 -translate-x-1/2 bg-stone-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg z-50 pointer-events-none transition-opacity duration-300 opacity-0 max-w-xs text-center">
+      メッセージ
+    </div>
+
+  </div>
+
+  <!-- アプリケーションロジック -->
+  <script>
+    // ==========================================
+    // アプリ状態管理（localStorage連携）
+    // ==========================================
+    const STORAGE_KEY = 'tono_health_app_data_v1';
+
+    let appState = {
+      stamps: 2, // 初期値（デモ用に見栄え良く2個付与）
+      dailyRecords: {
+        // 'YYYY-MM-DD': { walk: boolean, exercise: boolean }
+      },
+      posts: [
+        {
+          id: 1,
+          name: '佐々木さん（松崎地区）',
+          text: '👟 今日も1,000歩達成しました！木漏れ日が気持ちよかったです。',
+          time: '10分前',
+          claps: 4,
+          likes: 2
+        },
+        {
+          id: 2,
+          name: '高橋さん（青笹地区）',
+          text: '💪 自宅でラダー運動を復習しました！足がしっかり上がってきました。',
+          time: '1時間前',
+          claps: 7,
+          likes: 5
+        }
+      ],
+      surveyCompleted: false
+    };
+
+    // カレンダー運動履歴（教室開催日データ）
+    const classExercisesData = {
+      '2026-11-04': { title: '地区会場コース（遠野地区センター）', content: '体組成測定、血圧測定、ラダー運動（基本ステップ）、下半身の太ももストレッチを実施しました。' },
+      '2026-11-11': { title: '地区会場コース（遠野地区センター）', content: 'ラダー運動（サイドステップ）、タオルを使った肩甲骨ほぐし体操を実施。全員で水分補給のポイントを確認しました。' },
+      '2026-11-18': { title: '地区会場コース（予定）', content: '予定：バランス運動と介護予防の座座り立ち筋力測定を予定しています。' }
+    };
+
+    // 初期化ロード
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          appState = Object.assign(appState, JSON.parse(saved));
+        } catch (e) {
+          console.error('State load error', e);
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    // ==========================================
+    // タブ切り替え制御
+    // ==========================================
+    function switchTab(tabName) {
+      const tabs = ['home', 'calendar', 'community', 'videos', 'survey'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (t === tabName) {
+          sec.classList.remove('hidden');
+          btn.classList.add('text-brand-600');
+          btn.classList.remove('text-stone-400');
+        } else {
+          sec.classList.add('hidden');
+          btn.classList.remove('text-brand-600');
+          btn.classList.add('text-stone-400');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ==========================================
+    // スタンプ ＆ くじ引きロジック
+    // ==========================================
+    function renderStamps() {
+      const container = document.getElementById('stamp-slots-container');
+      container.innerHTML = '';
+      const current = appState.stamps;
+
+      for (let i = 1; i <= 5; i++) {
+        const isStamped = i <= current;
+        const slot = document.createElement('div');
+        slot.className = `aspect-square rounded-2xl flex flex-col items-center justify-center font-black border-2 transition ${
+          isStamped 
+            ? 'bg-amber-100 border-amber-500 text-amber-700 shadow-sm scale-100' 
+            : 'bg-stone-100 border-stone-300 text-stone-300'
+        }`;
+        
+        slot.innerHTML = isStamped 
+          ? `<i data-lucide="check-circle" class="w-6 h-6 text-amber-600 fill-amber-200"></i><span class="text-[10px] mt-0.5">${i}回目</span>`
+          : `<span class="text-lg">${i}</span>`;
+        container.appendChild(slot);
+      }
+
+      document.getElementById('stamp-count-badge').textContent = `現在: ${current}/5 個`;
+      const remain = Math.max(0, 5 - current);
+      document.getElementById('remain-stamps').textContent = remain;
+
+      const lotteryBtn = document.getElementById('lottery-btn');
+      const lotteryHint = document.getElementById('lottery-hint');
+
+      if (current >= 5) {
+        lotteryBtn.disabled = false;
+        lotteryBtn.className = 'w-full touch-target bg-gradient-to-r from-accent-500 to-amber-500 hover:from-accent-600 hover:to-amber-600 active:scale-95 text-white font-extrabold text-lg rounded-xl flex items-center justify-center space-x-2 transition duration-200 shadow-lg animate-pulse';
+        lotteryHint.innerHTML = '<span class="text-accent-600 font-bold">🎉 条件達成！タップしてくじを引けます</span>';
+      } else {
+        lotteryBtn.disabled = true;
+        lotteryBtn.className = 'w-full touch-target bg-stone-300 text-stone-500 font-bold text-base rounded-xl flex items-center justify-center space-x-2 transition shadow';
+        lotteryHint.innerHTML = `あと <span class="text-accent-600 font-bold text-sm">${remain}</span> 回教室に参加すると引けます`;
+      }
+      lucide.createIcons();
+    }
+
+    // QRシミュレーター
+    function triggerQRScanSimulation() {
+      document.getElementById('qr-modal').classList.remove('hidden');
+    }
+    function closeQRModal() {
+      document.getElementById('qr-modal').classList.add('hidden');
+    }
+    function completeQRScanSuccess() {
+      closeQRModal();
+      if (appState.stamps < 5) {
+        appState.stamps += 1;
+        saveState();
+        renderStamps();
+        triggerConfetti();
+        showToast('🎉 受付完了！スタンプを1個獲得しました！');
+      } else {
+        showToast('すでに5回分のスタンプが満杯です！くじを引いてください');
+      }
+    }
+
+    // くじ引きモーダル
+    function openLotteryModal() {
+      document.getElementById('lottery-modal').classList.remove('hidden');
+      document.getElementById('lottery-roulette-icon').textContent = '🎁';
+      document.getElementById('lottery-status-text').textContent = '何が当たるかお楽しみ！';
+      document.getElementById('lottery-action-area').innerHTML = `
+        <button id="btn-spin-lottery" onclick="executeLotterySpin()" class="w-full touch-target bg-accent-500 hover:bg-accent-600 active:scale-95 text-white font-black text-lg rounded-xl shadow-lg transition">
+          くじを引く！
+        </button>
+      `;
+    }
+    function closeLotteryModal() {
+      document.getElementById('lottery-modal').classList.add('hidden');
+    }
+
+    function executeLotterySpin() {
+      const icon = document.getElementById('lottery-roulette-icon');
+      const text = document.getElementById('lottery-status-text');
+      const btn = document.getElementById('btn-spin-lottery');
+      btn.disabled = true;
+      btn.classList.add('opacity-50');
+
+      const prizes = [
+        { name: '遠野市 共通商品券 500円分', icon: '🎫', color: 'text-amber-600' },
+        { name: '遠野産 お米券（1kg分）', icon: '🌾', color: 'text-emerald-600' },
+        { name: '遠野市 早池峰バス利用券（往復）', icon: '🚌', color: 'text-blue-600' },
+        { name: '健康グッズ（特製タオル＆バンド）', icon: '🎽', color: 'text-purple-600' }
+      ];
+
+      let counter = 0;
+      const emojis = ['🌾', '🎫', '🚌', '🎽', '🍎', '🎁'];
+      const interval = setInterval(() => {
+        icon.textContent = emojis[counter % emojis.length];
+        counter++;
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        const win = prizes[Math.floor(Math.random() * prizes.length)];
+        icon.textContent = win.icon;
+        text.innerHTML = `
+          <div class="text-xs text-accent-600 font-bold">✨ おめでとうございます！ ✨</div>
+          <div class="text-base font-black ${win.color} mt-1">${win.name}</div>
+          <div class="text-[11px] text-stone-500 mt-2 bg-stone-100 p-2 rounded-lg">
+            教室受付のスタッフにこの画面をご提示ください。引換コード: <span class="font-mono font-bold text-stone-800">TN-${Math.floor(1000 + Math.random()*9000)}</span>
+          </div>
+        `;
+
+        triggerConfetti();
+
+        // スタンプを消費してリセット
+        appState.stamps = 0;
+        saveState();
+        renderStamps();
+
+        document.getElementById('lottery-action-area').innerHTML = `
+          <button onclick="closeLotteryModal()" class="w-full touch-target bg-brand-600 hover:bg-brand-700 text-white font-bold text-base rounded-xl shadow-md transition">
+            結果を確認して閉じる
+          </button>
+        `;
+      }, 1800);
+    }
+
+    // ==========================================
+    // カレンダー ＆ 日々記録
+    // ==========================================
+    function getTodayKey() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+      
+      const year = 2026;
+      const month = 10; // 0-indexed => 11月
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      // 空白マス
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        grid.appendChild(empty);
+      }
+
+      let achievedCount = 0;
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const record = appState.dailyRecords[dateKey] || {};
+        const isAchieved = record.walk || record.exercise;
+        const isClassDay = classExercisesData[dateKey] !== undefined;
+
+        if (isAchieved) achievedCount++;
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.onclick = () => selectCalendarDay(dateKey, day);
+
+        let bgStyle = 'bg-stone-50 text-stone-700 hover:bg-stone-100';
+        if (isClassDay) {
+          bgStyle = 'bg-accent-100 text-accent-900 border border-accent-400 font-bold';
+        } else if (isAchieved) {
+          bgStyle = 'bg-brand-100 text-brand-900 border border-brand-300 font-bold';
+        }
+
+        cell.className = `h-11 rounded-xl flex flex-col items-center justify-center relative transition active:scale-90 ${bgStyle}`;
+        cell.innerHTML = `
+          <span class="text-xs">${day}</span>
+          <div class="flex space-x-0.5 mt-0.5">
+            ${isAchieved ? '<span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>' : ''}
+            ${isClassDay ? '<span class="w-1.5 h-1.5 rounded-full bg-accent-500"></span>' : ''}
+          </div>
+        `;
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('month-achieved-count').textContent = achievedCount;
+      updateDailyButtons();
+    }
+
+    function toggleDailyRecord(type) {
+      const today = getTodayKey();
+      if (!appState.dailyRecords[today]) {
+        appState.dailyRecords[today] = { walk: false, exercise: false };
+      }
+      appState.dailyRecords[today][type] = !appState.dailyRecords[today][type];
+      saveState();
+      renderCalendar();
+      updateDailyButtons();
+      showToast(appState.dailyRecords[today][type] ? '記録しました！継続素晴らしいです！' : '記録を取り消しました');
+    }
+
+    function updateDailyButtons() {
+      const today = getTodayKey();
+      const rec = appState.dailyRecords[today] || { walk: false, exercise: false };
+
+      const btnWalk = document.getElementById('btn-record-walk');
+      const labelWalk = document.getElementById('label-walk-status');
+      if (rec.walk) {
+        btnWalk.className = 'touch-target p-3 bg-brand-50 border-2 border-brand-500 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow';
+        labelWalk.textContent = '達成済 ✓';
+        labelWalk.className = 'text-xs text-brand-600 font-bold mt-1';
+      } else {
+        btnWalk.className = 'touch-target p-3 bg-white border-2 border-stone-200 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow-sm';
+        labelWalk.textContent = '未記録';
+        labelWalk.className = 'text-xs text-stone-400 font-semibold mt-1';
+      }
+
+      const btnEx = document.getElementById('btn-record-exercise');
+      const labelEx = document.getElementById('label-exercise-status');
+      if (rec.exercise) {
+        btnEx.className = 'touch-target p-3 bg-brand-50 border-2 border-brand-500 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow';
+        labelEx.textContent = '達成済 ✓';
+        labelEx.className = 'text-xs text-brand-600 font-bold mt-1';
+      } else {
+        btnEx.className = 'touch-target p-3 bg-white border-2 border-stone-200 rounded-xl flex flex-col items-center justify-center text-center transition active:scale-95 shadow-sm';
+        labelEx.textContent = '未記録';
+        labelEx.className = 'text-xs text-stone-400 font-semibold mt-1';
+      }
+    }
+
+    function selectCalendarDay(dateKey, dayNumber) {
+      const detailTitle = document.getElementById('detail-date');
+      const detailContent = document.getElementById('detail-content');
+      const detailTag = document.getElementById('detail-tag');
+
+      const classData = classExercisesData[dateKey];
+      const rec = appState.dailyRecords[dateKey];
+
+      detailTitle.textContent = `2026年 11月 ${dayNumber}日の様子`;
+
+      if (classData) {
+        detailTag.classList.remove('hidden');
+        detailContent.innerHTML = `
+          <div class="font-bold text-stone-800 mb-1">【${classData.title}】</div>
+          <div>${classData.content}</div>
+        `;
+      } else if (rec && (rec.walk || rec.exercise)) {
+        detailTag.classList.add('hidden');
+        detailContent.innerHTML = `
+          <div class="text-brand-800 font-bold mb-1">【自主取り組みの記録】</div>
+          <div>${rec.walk ? '・1,000歩達成 👟<br>' : ''}${rec.exercise ? '・自宅で簡単体操実践 🧘' : ''}</div>
+        `;
+      } else {
+        detailTag.classList.add('hidden');
+        detailContent.textContent = 'この日の教室受講や自主チェックの記録はありません。';
+      }
+    }
+
+    // ==========================================
+    // コミュニティ広場
+    // ==========================================
+    function renderCommunity() {
+      const container = document.getElementById('community-timeline');
+      container.innerHTML = '';
+
+      appState.posts.forEach((post, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-stone-200 rounded-2xl p-4 shadow-sm space-y-2';
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-xs text-stone-500">
+            <span class="font-bold text-stone-700 flex items-center">
+              <span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold mr-1.5">友</span>
+              ${post.name}
+            </span>
+            <span>${post.time}</span>
+          </div>
+          <p class="text-sm text-stone-800 font-medium leading-snug">${post.text}</p>
+          <div class="flex items-center space-x-2 pt-2 border-t border-stone-100 text-xs">
+            <button onclick="reactionPost(${index}, 'claps')" class="px-3 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold flex items-center space-x-1 active:scale-95 transition">
+              <span>👏 拍手</span>
+              <span class="font-bold">${post.claps}</span>
+            </button>
+            <button onclick="reactionPost(${index}, 'likes')" class="px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold flex items-center space-x-1 active:scale-95 transition">
+              <span>❤️ いいね</span>
+              <span class="font-bold">${post.likes}</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function postPresetComment(msg) {
+      const newPost = {
+        id: Date.now(),
+        name: '遠野 太郎 さん（あなた）',
+        text: msg,
+        time: 'たった今',
+        claps: 0,
+        likes: 0
+      };
+      appState.posts.unshift(newPost);
+      saveState();
+      renderCommunity();
+      showToast('広場に投稿しました！');
+    }
+
+    function reactionPost(index, type) {
+      appState.posts[index][type] += 1;
+      saveState();
+      renderCommunity();
+      showToast('リアクションを送りました！');
+    }
+
+    // ==========================================
+    // 月1アンケート送信
+    // ==========================================
+    function submitSurvey(e) {
+      e.preventDefault();
+      if (appState.surveyCompleted) {
+        showToast('今月のアンケートは回答済みです。ご協力感謝いたします！');
+        return;
+      }
+
+      appState.surveyCompleted = true;
+      if (appState.stamps < 5) {
+        appState.stamps += 1; // アンケート特典スタンプ付与
+      }
+      saveState();
+      renderStamps();
+      triggerConfetti();
+
+      showToast('アンケート送信完了！特典スタンプ＋1個を獲得しました！');
+      document.getElementById('monthly-survey-form').reset();
+      switchTab('home');
+    }
+
+    // ==========================================
+    // 汎用UIエフェクト（トースト・紙吹雪）
+    // ==========================================
+    function showToast(msg) {
+      const toast = document.getElementById('toast-msg');
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+      }, 2500);
+    }
+
+    function triggerConfetti() {
+      if (window.confetti) {
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    // ==========================================
+    // 起動時ライフサイクル
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderStamps();
+      renderCalendar();
+      renderCommunity();
+      lucide.createIcons();
+    });
+  </script>
+
+</body>
+</html>
