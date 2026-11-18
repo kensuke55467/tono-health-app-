@@ -12,6 +12,8 @@
       --primary-light: #e8f5e9;
       --accent: #ef6c00;
       --accent-light: #fff3e0;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
       --bg: #f5f7f5;
       --card: #ffffff;
       --text: #1f2937;
@@ -87,6 +89,7 @@
       margin-bottom: 12px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
     }
 
@@ -307,6 +310,35 @@
     }
 
     /* みんなの広場（交流） */
+    .admin-toggle-btn {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #f3f4f6;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .admin-toggle-btn.active {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    .admin-banner {
+      display: none;
+      background: var(--danger-light);
+      border: 1.5px solid var(--danger);
+      color: #991b1b;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
     .template-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -363,9 +395,10 @@
     .post-meta {
       font-size: 13px;
       color: var(--muted);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     .post-body {
@@ -375,8 +408,10 @@
       word-break: break-word;
     }
 
-    .reaction-bar {
+    .post-actions {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
       gap: 8px;
     }
 
@@ -394,6 +429,23 @@
       background: #fef3c7;
       border-color: #f59e0b;
       color: #b45309;
+    }
+
+    .del-btn {
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #4b5563;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .del-btn.admin-force {
+      background: var(--danger-light);
+      border-color: var(--danger);
+      color: var(--danger);
     }
 
     /* 動画埋め込みコンテナ */
@@ -530,7 +582,7 @@
     
     <!-- 5回参加スタンプ＆くじ -->
     <div class="card">
-      <div class="card-title">🎟️ 教室参加スタンプ（5回でくじ引き）</div>
+      <div class="card-title"><span>🎟️ 教室参加スタンプ（5回でくじ引き）</span></div>
       <p style="font-size:14px; color:#4b5563;">会場受付のQRコードをカメラで読み取るとスタンプが貯まります（1日1回有効）。</p>
 
       <div class="stamps-grid" id="stamps-container"></div>
@@ -563,7 +615,7 @@
 
     <!-- 今日のミニ目標 -->
     <div class="card">
-      <div class="card-title">👟 今日の健康ミニ目標</div>
+      <div class="card-title"><span>👟 今日の健康ミニ目標</span></div>
       <p style="font-size:14px; color:#4b5563; margin-bottom:12px;">歩数計やスマホを見て、達成できたらボタンを押しましょう。</p>
 
       <div class="goal-item">
@@ -585,7 +637,7 @@
 
     <!-- 次回教室リマインド（公式LINE配信と連動） -->
     <div class="card" style="background: var(--accent-light); border-color: #fed7aa;">
-      <div class="card-title" style="color: #c2410c;">📢 次回の運動教室のお知らせ</div>
+      <div class="card-title" style="color: #c2410c;"><span>📢 次回の運動教室のお知らせ</span></div>
       <p style="font-size:16px; font-weight:700;">11月20日（金） 10:00〜11:30</p>
       <p style="font-size:15px; margin-top:4px;">会場：遠野市民センター（90分コース）</p>
       <p style="font-size:13px; color:#7c2d12; margin-top:6px;">※開催前日の朝に公式LINEからもリマインド通知が届きます。</p>
@@ -596,7 +648,7 @@
   <!-- ==================== 2. カレンダー（参加履歴・やったこと確認） ==================== -->
   <section id="page-calendar" class="page">
     <div class="card">
-      <div class="card-title">📅 2026年11月 活動カレンダー</div>
+      <div class="card-title"><span>📅 2026年11月 活動カレンダー</span></div>
       <p style="font-size:14px; color:#4b5563;">日付をタップすると、その日の運動内容が確認できます。</p>
 
       <div class="cal-grid" id="calendar-grid"></div>
@@ -613,10 +665,19 @@
     </div>
   </section>
 
-  <!-- ==================== 3. みんなの広場（ワンタップ＋自由入力交流） ==================== -->
+  <!-- ==================== 3. みんなの広場（投稿削除＆管理者強制削除対応） ==================== -->
   <section id="page-community" class="page">
     <div class="card">
-      <div class="card-title">💬 みんなの健康広場</div>
+      <div class="card-title">
+        <span>💬 みんなの健康広場</span>
+        <button class="admin-toggle-btn" id="admin-mode-btn" onclick="toggleAdminMode()">🛡️ 管理者モード</button>
+      </div>
+
+      <!-- 管理者モード中バナー -->
+      <div class="admin-banner" id="admin-banner">
+        🛡️ 管理者モード有効中：不適切な投稿や個人情報の書き込みを強制削除できます。
+      </div>
+
       <p style="font-size:14px; color:#4b5563; margin-bottom:10px;">ワンタップで送るか、自由に文章を書いて投稿できます。</p>
 
       <div class="template-grid">
@@ -639,7 +700,7 @@
   <!-- ==================== 4. 復習動画（YouTube限定公開動画リスト） ==================== -->
   <section id="page-videos" class="page">
     <div class="card">
-      <div class="card-title">🎬 教室の運動・復習動画</div>
+      <div class="card-title"><span>🎬 教室の運動・復習動画</span></div>
       <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">指導士が撮影した教室の運動のコツを動画でいつでも復習できます。</p>
       <div id="video-list-container"></div>
     </div>
@@ -648,7 +709,7 @@
   <!-- ==================== 5. 月1回アンケート（Googleフォーム連携） ==================== -->
   <section id="page-survey" class="page">
     <div class="card">
-      <div class="card-title">📝 今月の運動教室アンケート</div>
+      <div class="card-title"><span>📝 今月の運動教室アンケート</span></div>
       <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">
         複数回参加される方の負担を減らすため、アンケートは<strong>月1回</strong>のみ実施しています。より良い教室づくりのため、ぜひご意見をお聞かせください。
       </p>
@@ -664,7 +725,6 @@
           ※下のボタンを押すと外部のGoogleフォームが開きます。
         </p>
 
-        <!-- 本番のGoogleフォームURLに差し替え可能 -->
         <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" id="gform-link-btn">
           🌐 Googleフォームで回答する
         </a>
@@ -715,9 +775,12 @@
 
 <script>
   // =========================================================================
-  // 【設定エリア】既存ツール（YouTube・QRコード・Googleフォーム）の差し替え箇所
+  // 【設定エリア】既存ツール（YouTube・QRコード・Googleフォーム・管理者PIN）
   // =========================================================================
   const APP_CONFIG = {
+    // 管理者モード切り替え用の簡易PINコード
+    ADMIN_PIN: "1234",
+
     // 月ごとに変更する受付QRコードの合言葉（不正防止）
     VALID_QR_CODE: "TONO_2026_11",
 
@@ -741,9 +804,9 @@
 
   // ==================== データ状態管理 ====================
   const defaultState = {
-    stamps: 4, // デモ用に4個貯まっている状態（あと1回でくじが引ける）
+    stamps: 4,
     qrCheckedInToday: false,
-    unclaimedPrize: null, // 未交換の当選チケット情報
+    unclaimedPrize: null,
     walkDone: false,
     stretchDone: false,
     classDays: {
@@ -751,16 +814,17 @@
       13: "【90分コース参加】ラダー運動（応用）、ペアでのボール体操、血圧測定を実施しました。"
     },
     posts: [
-      { id: 1, name: "遠野 花子", time: "今日 09:15", text: "今日も1,000歩以上歩きました！👟", likes: 4, liked: false },
-      { id: 2, name: "佐々木 健一", time: "昨日 16:40", text: "次回の教室も参加します！楽しみ😊", likes: 6, liked: true }
+      { id: 1, name: "遠野 花子", isMine: false, time: "今日 09:15", text: "今日も1,000歩以上歩きました！👟", likes: 4, liked: false },
+      { id: 2, name: "佐々木 健一", isMine: false, time: "昨日 16:40", text: "次回の教室も参加します！楽しみ😊", likes: 6, liked: true }
     ]
   };
 
-  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v4")) || defaultState;
+  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v5")) || defaultState;
+  let isAdminMode = false;
   let html5QrCode = null;
 
   function saveState() {
-    localStorage.setItem("tonoHealthApp_v4", JSON.stringify(appState));
+    localStorage.setItem("tonoHealthApp_v5", JSON.stringify(appState));
   }
 
   // ==================== タブ切り替え ====================
@@ -791,7 +855,7 @@
     banner.style.display = appState.unclaimedPrize ? "block" : "none";
   }
 
-  // ==================== 実機カメラQRスキャナー（不正防止チェック付き） ====================
+  // ==================== 実機カメラQRスキャナー ====================
   function startQrScanner() {
     const container = document.getElementById("qr-reader-container");
     container.style.display = "block";
@@ -971,11 +1035,32 @@
     }
   }
 
-  // ==================== みんなの広場 ====================
+  // ==================== みんなの広場（投稿・削除・管理者強制削除） ====================
   function escapeHtml(str) {
     return str.replace(/[&<>"']/g, (m) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[m]));
+  }
+
+  function toggleAdminMode() {
+    if (!isAdminMode) {
+      const pin = prompt("管理者用PINコードを入力してください（デモ用: 1234）");
+      if (pin === null) return;
+      if (pin !== APP_CONFIG.ADMIN_PIN) {
+        alert("PINコードが正しくありません。");
+        return;
+      }
+      isAdminMode = true;
+    } else {
+      isAdminMode = false;
+    }
+
+    const btn = document.getElementById("admin-mode-btn");
+    const banner = document.getElementById("admin-banner");
+    btn.classList.toggle("active", isAdminMode);
+    btn.textContent = isAdminMode ? "🛡️ 管理者ON（解除）" : "🛡️ 管理者モード";
+    banner.style.display = isAdminMode ? "block" : "none";
+    renderPosts();
   }
 
   function renderPosts() {
@@ -984,13 +1069,26 @@
     appState.posts.forEach(post => {
       const div = document.createElement("div");
       div.className = "post-card";
+
+      // 自分の投稿なら「削除」、管理者モード中なら他人の投稿も「強制削除」を表示
+      let deleteBtnHtml = "";
+      if (post.isMine) {
+        deleteBtnHtml = `<button class="del-btn" onclick="deletePost(${post.id}, false)">🗑️ 削除</button>`;
+      } else if (isAdminMode) {
+        deleteBtnHtml = `<button class="del-btn admin-force" onclick="deletePost(${post.id}, true)">⚠️ 強制削除</button>`;
+      }
+
       div.innerHTML = `
-        <div class="post-meta"><span>👤 ${escapeHtml(post.name)} さん</span><span>${escapeHtml(post.time)}</span></div>
+        <div class="post-meta">
+          <span>👤 ${escapeHtml(post.name)} さん</span>
+          <span>${escapeHtml(post.time)}</span>
+        </div>
         <div class="post-body">${escapeHtml(post.text)}</div>
-        <div class="reaction-bar">
+        <div class="post-actions">
           <button class="react-btn ${post.liked ? 'active' : ''}" onclick="toggleLike(${post.id})">
             👏 いいね！ (${post.likes})
           </button>
+          ${deleteBtnHtml}
         </div>
       `;
       list.appendChild(div);
@@ -1001,6 +1099,7 @@
     appState.posts.unshift({
       id: Date.now(),
       name: "あなた",
+      isMine: true,
       time: "たった今",
       text: text,
       likes: 1,
@@ -1019,6 +1118,17 @@
     }
     addPost(text);
     inputEl.value = "";
+  }
+
+  function deletePost(id, isForcedByAdmin) {
+    const msg = isForcedByAdmin
+      ? "【管理者権限】この投稿を不適切な発言として強制削除しますか？"
+      : "自分の投稿を削除しますか？";
+    if (!confirm(msg)) return;
+
+    appState.posts = appState.posts.filter(p => p.id !== id);
+    saveState();
+    renderPosts();
   }
 
   function toggleLike(id) {
