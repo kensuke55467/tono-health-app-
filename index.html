@@ -422,7 +422,6 @@
       border: 1.5px solid #86efac;
       border-radius: 14px;
       padding: 16px;
-      margin-bottom: 14px;
     }
 
     .gform-list {
@@ -651,7 +650,7 @@
     <div class="card">
       <div class="card-title">📝 今月の運動教室アンケート</div>
       <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">
-        複数回参加される方の負担を減らすため、アンケートは<strong>月1回</strong>のみ実施しています。
+        複数回参加される方の負担を減らすため、アンケートは<strong>月1回</strong>のみ実施しています。より良い教室づくりのため、ぜひご意見をお聞かせください。
       </p>
 
       <div class="gform-box">
@@ -661,19 +660,15 @@
           <li>次回やってみたい運動・ストレッチ</li>
           <li>教室運営へのご意見・ご要望</li>
         </ul>
-        <p style="font-size:13px; color:#374151; margin-bottom:12px;">
-          ※外部のGoogleフォームが開きます。回答後にスタンプを1個プレゼント！
+        <p style="font-size:13px; color:#374151; margin-bottom:14px;">
+          ※下のボタンを押すと外部のGoogleフォームが開きます。
         </p>
 
         <!-- 本番のGoogleフォームURLに差し替え可能 -->
-        <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" id="gform-link-btn" onclick="markSurveyOpened()">
+        <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" id="gform-link-btn">
           🌐 Googleフォームで回答する
         </a>
       </div>
-
-      <button class="btn btn-outline" id="survey-complete-btn" onclick="completeSurveyDemo()">
-        ✅ 回答完了（スタンプを1個受け取る）
-      </button>
     </div>
   </section>
 
@@ -751,7 +746,6 @@
     unclaimedPrize: null, // 未交換の当選チケット情報
     walkDone: false,
     stretchDone: false,
-    surveyDone: false,
     classDays: {
       6: "【90分コース参加】ラダー運動（基本ステップ）、体組成測定、下半身ストレッチを実施しました。",
       13: "【90分コース参加】ラダー運動（応用）、ペアでのボール体操、血圧測定を実施しました。"
@@ -762,11 +756,11 @@
     ]
   };
 
-  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v3")) || defaultState;
+  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v4")) || defaultState;
   let html5QrCode = null;
 
   function saveState() {
-    localStorage.setItem("tonoHealthApp_v3", JSON.stringify(appState));
+    localStorage.setItem("tonoHealthApp_v4", JSON.stringify(appState));
   }
 
   // ==================== タブ切り替え ====================
@@ -793,7 +787,6 @@
     const lotteryBtn = document.getElementById("lottery-btn");
     lotteryBtn.disabled = appState.stamps < 5;
 
-    // 未交換チケットのバナー表示制御
     const banner = document.getElementById("unclaimed-banner");
     banner.style.display = appState.unclaimedPrize ? "block" : "none";
   }
@@ -836,7 +829,6 @@
   }
 
   function handleQrDecoded(codeText) {
-    // テスト環境では一般QRでもデモ動作するよう許容しつつ、検証ロジックを明示
     if (appState.qrCheckedInToday) {
       alert("本日の来場チェックインはすでに完了しています（不正防止のため1日1回まで）。");
       return;
@@ -848,8 +840,8 @@
   function simulateQrSuccess() {
     stopQrScanner();
     if (appState.qrCheckedInToday) {
-      alert("本日の来場チェックインはすでに完了しています（1日1回制限）。\n※デモで再度押したい場合はページを再読み込みしてください。");
-      appState.qrCheckedInToday = false; // デモ用にリセット可能にする
+      alert("本日の来場チェックインはすでに完了しています（1日1回制限）。\n※デモで再度押したい場合は次のタップでもう一度カウントできるようにリセットしました。");
+      appState.qrCheckedInToday = false;
       return;
     }
     appState.qrCheckedInToday = true;
@@ -1057,32 +1049,6 @@
     });
   }
 
-  // ==================== Googleフォームアンケート連携 ====================
-  function markSurveyOpened() {
-    // 外部のGoogleフォームを開いたことを記録
-  }
-
-  function completeSurveyDemo() {
-    if (appState.surveyDone) {
-      alert("今月のアンケート回答特典はすでに受け取り済みです！");
-      return;
-    }
-    appState.surveyDone = true;
-    if (appState.stamps < 5) appState.stamps += 1;
-    saveState();
-    renderStamps();
-    updateSurveyButton();
-    alert("Googleフォームのご回答ありがとうございます！\nボーナススタンプを1個付与しました。");
-  }
-
-  function updateSurveyButton() {
-    const btn = document.getElementById("survey-complete-btn");
-    if (appState.surveyDone) {
-      btn.textContent = "今月は回答済み（スタンプ付与済）";
-      btn.disabled = true;
-    }
-  }
-
   // ==================== 初期化 ====================
   window.onload = () => {
     document.getElementById("gform-link-btn").href = APP_CONFIG.GOOGLE_FORM_URL;
@@ -1091,7 +1057,6 @@
     renderCalendar();
     renderPosts();
     renderVideos();
-    updateSurveyButton();
   };
 </script>
 </body>
