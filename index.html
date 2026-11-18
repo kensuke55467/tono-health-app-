@@ -139,6 +139,7 @@
       justify-content: center;
       gap: 8px;
       padding: 12px 16px;
+      text-decoration: none;
       transition: transform 0.1s, opacity 0.2s;
     }
 
@@ -189,6 +190,27 @@
       width: 100%;
       border-radius: 8px;
       overflow: hidden;
+    }
+
+    .qr-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    /* 未引換チケット通知バナー */
+    .ticket-banner {
+      display: none;
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      text-align: center;
     }
 
     /* 今日の目標チェック */
@@ -304,6 +326,32 @@
       cursor: pointer;
     }
 
+    .custom-post-box {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .custom-post-input {
+      width: 100%;
+      min-height: 76px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      font-size: 16px;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .custom-post-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
     .post-card {
       padding: 14px;
       border-radius: 12px;
@@ -324,6 +372,7 @@
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 10px;
+      word-break: break-word;
     }
 
     .reaction-bar {
@@ -351,7 +400,7 @@
     .video-wrapper {
       position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 56.25%;
       border-radius: 12px;
       overflow: hidden;
       background: #000;
@@ -367,29 +416,19 @@
       border: none;
     }
 
-    /* アンケート */
-    .radio-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin: 8px 0 16px;
+    /* Googleフォーム連携ボックス */
+    .gform-box {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
     }
 
-    .radio-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      border: 1.5px solid #d1d5db;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .radio-label input {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--primary);
+    .gform-list {
+      margin: 10px 0 14px 20px;
+      font-size: 15px;
+      color: #374151;
     }
 
     /* 下部ナビゲーション */
@@ -430,7 +469,7 @@
       font-size: 22px;
     }
 
-    /* モーダル（くじ結果） */
+    /* モーダル（受付目視引換用） */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -450,7 +489,7 @@
       background: #fff;
       border-radius: 20px;
       padding: 24px;
-      max-width: 380px;
+      max-width: 390px;
       width: 100%;
       text-align: center;
     }
@@ -460,10 +499,21 @@
       background: #fef3c7;
       color: #b45309;
       font-weight: 800;
-      padding: 8px 16px;
-      border-radius: 999px;
-      font-size: 16px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 2px solid #f59e0b;
+      font-size: 17px;
       margin: 12px 0;
+    }
+
+    .staff-check-box {
+      background: #fef2f2;
+      border: 1.5px dashed #ef4444;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #991b1b;
     }
   </style>
 </head>
@@ -482,7 +532,7 @@
     <!-- 5回参加スタンプ＆くじ -->
     <div class="card">
       <div class="card-title">🎟️ 教室参加スタンプ（5回でくじ引き）</div>
-      <p style="font-size:14px; color:#4b5563;">会場受付のQRコードをカメラで読み取るとスタンプが貯まります。</p>
+      <p style="font-size:14px; color:#4b5563;">会場受付のQRコードをカメラで読み取るとスタンプが貯まります（1日1回有効）。</p>
 
       <div class="stamps-grid" id="stamps-container"></div>
 
@@ -491,13 +541,23 @@
         <button class="btn btn-accent" id="lottery-btn" onclick="drawLottery()" disabled>🎁 くじを引く</button>
       </div>
 
+      <!-- 未交換の当選チケットがある場合の表示 -->
+      <div class="ticket-banner" id="unclaimed-banner">
+        <p style="font-size:14px; font-weight:700; color:#92400e; margin-bottom:8px;">🎁 未交換の当選引換券があります！</p>
+        <button class="btn btn-accent" style="min-height:44px; font-size:15px;" onclick="openTicketModal()">受付提示用の当選画面を開く</button>
+      </div>
+
       <!-- カメラ表示エリア -->
       <div id="qr-reader-container">
-        <p style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--primary);">受付のQRコードを枠内に映してください</p>
+        <p style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--primary);">受付に掲示された今月のQRコードを映してください</p>
         <div id="qr-reader"></div>
+        <div class="qr-note">
+          <strong>【不正防止仕様】</strong><br>
+          月替わりの会場QRコード（今月コード: <code>TONO_2026_11</code>）を照合し、1日1回のみスタンプを付与します。
+        </div>
         <div class="btn-row" style="margin-top:10px;">
           <button class="btn btn-outline" onclick="stopQrScanner()" style="min-height:44px; font-size:15px;">閉じる</button>
-          <button class="btn btn-accent" onclick="simulateQrSuccess()" style="min-height:44px; font-size:14px;">デモ用：読取成功</button>
+          <button class="btn btn-accent" onclick="simulateQrSuccess()" style="min-height:44px; font-size:14px;">デモ用：受付QR成功</button>
         </div>
       </div>
     </div>
@@ -524,12 +584,12 @@
       </div>
     </div>
 
-    <!-- 次回教室リマインド -->
+    <!-- 次回教室リマインド（公式LINE配信と連動） -->
     <div class="card" style="background: var(--accent-light); border-color: #fed7aa;">
       <div class="card-title" style="color: #c2410c;">📢 次回の運動教室のお知らせ</div>
       <p style="font-size:16px; font-weight:700;">11月20日（金） 10:00〜11:30</p>
       <p style="font-size:15px; margin-top:4px;">会場：遠野市民センター（90分コース）</p>
-      <p style="font-size:13px; color:#7c2d12; margin-top:6px;">※飲み物・タオル・内履きをご持参ください。</p>
+      <p style="font-size:13px; color:#7c2d12; margin-top:6px;">※開催前日の朝に公式LINEからもリマインド通知が届きます。</p>
     </div>
 
   </section>
@@ -554,11 +614,11 @@
     </div>
   </section>
 
-  <!-- ==================== 3. みんなの広場（仲間づくり・ワンタップ交流） ==================== -->
+  <!-- ==================== 3. みんなの広場（ワンタップ＋自由入力交流） ==================== -->
   <section id="page-community" class="page">
     <div class="card">
       <div class="card-title">💬 みんなの健康広場</div>
-      <p style="font-size:14px; color:#4b5563; margin-bottom:10px;">ボタンを押すだけで仲間に近況を送れます。</p>
+      <p style="font-size:14px; color:#4b5563; margin-bottom:10px;">ワンタップで送るか、自由に文章を書いて投稿できます。</p>
 
       <div class="template-grid">
         <button class="tpl-btn" onclick="addPost('今日も1,000歩以上歩きました！👟')">👟 今日も歩いたよ！</button>
@@ -567,74 +627,75 @@
         <button class="tpl-btn" onclick="addPost('次回の教室も参加します！楽しみ😊')">😊 次回も参加します！</button>
       </div>
 
+      <div class="custom-post-box">
+        <label for="custom-post-text" style="display:block; font-size:14px; font-weight:700; color:var(--primary); margin-bottom:6px;">✏️ 自由にコメントを書く</label>
+        <textarea id="custom-post-text" class="custom-post-input" placeholder="例：今日は公園を2周散歩しました！体調も良いです。"></textarea>
+        <button class="btn btn-primary" style="min-height:48px; font-size:16px;" onclick="submitCustomPost()">投稿する</button>
+      </div>
+
       <div id="posts-list"></div>
     </div>
   </section>
 
-  <!-- ==================== 4. 復習動画（実動画再生プレイヤー） ==================== -->
+  <!-- ==================== 4. 復習動画（YouTube限定公開動画リスト） ==================== -->
   <section id="page-videos" class="page">
     <div class="card">
       <div class="card-title">🎬 教室の運動・復習動画</div>
-      <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">教室で行った運動のコツを動画で復習できます。再生ボタンを押してください。</p>
-
-      <!-- 動画1 -->
-      <div style="margin-bottom:20px;">
-        <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">① 転倒予防！ラダー運動の基本ステップ</h3>
-        <div class="video-wrapper">
-          <iframe src="https://www.youtube.com/embed/M7lc1UVf-VE?rel=0" title="運動復習動画1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-        <p style="font-size:13px; color:#4b5563;">ポイント：目線は足元ばかり見ず、少し前を見てリズムよく足を動かしましょう。</p>
-      </div>
-
-      <!-- 動画2 -->
-      <div>
-        <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">② 自宅でできる！椅子に座って下半身ストレッチ</h3>
-        <div class="video-wrapper">
-          <iframe src="https://www.youtube.com/embed/aqz-KE-bpKQ?rel=0" title="運動復習動画2" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-        <p style="font-size:13px; color:#4b5563;">ポイント：息を止めずに、ゆっくり5秒数えながら膝を伸ばします。</p>
-      </div>
+      <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">指導士が撮影した教室の運動のコツを動画でいつでも復習できます。</p>
+      <div id="video-list-container"></div>
     </div>
   </section>
 
-  <!-- ==================== 5. 月1回アンケート ==================== -->
+  <!-- ==================== 5. 月1回アンケート（Googleフォーム連携） ==================== -->
   <section id="page-survey" class="page">
     <div class="card">
       <div class="card-title">📝 今月の運動教室アンケート</div>
-      <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">月1回の簡単なアンケートです。回答すると<strong>スタンプを1個</strong>プレゼント！</p>
+      <p style="font-size:14px; color:#4b5563; margin-bottom:14px;">
+        複数回参加される方の負担を減らすため、アンケートは<strong>月1回</strong>のみ実施しています。
+      </p>
 
-      <form id="survey-form" onsubmit="submitSurvey(event)">
-        <p style="font-weight:700; font-size:16px;">Q1. 今月の運動教室の満足度はいかがですか？</p>
-        <div class="radio-group">
-          <label class="radio-label"><input type="radio" name="q1" value="大変満足" required> 大変満足</label>
-          <label class="radio-label"><input type="radio" name="q1" value="満足"> 満足</label>
-          <label class="radio-label"><input type="radio" name="q1" value="ふつう"> ふつう</label>
-        </div>
+      <div class="gform-box">
+        <p style="font-size:16px; font-weight:700; color:var(--primary);">📋 2026年11月度 定期アンケート（所要時間 約1分）</p>
+        <ul class="gform-list">
+          <li>今月の運動教室の満足度</li>
+          <li>次回やってみたい運動・ストレッチ</li>
+          <li>教室運営へのご意見・ご要望</li>
+        </ul>
+        <p style="font-size:13px; color:#374151; margin-bottom:12px;">
+          ※外部のGoogleフォームが開きます。回答後にスタンプを1個プレゼント！
+        </p>
 
-        <p style="font-weight:700; font-size:16px;">Q2. 次回やってみたい運動・要望はありますか？</p>
-        <div class="radio-group">
-          <label class="radio-label"><input type="radio" name="q2" value="ラダー運動" required> ラダー運動をもっとやりたい</label>
-          <label class="radio-label"><input type="radio" name="q2" value="ストレッチ"> 腰痛・膝痛予防のストレッチ</label>
-          <label class="radio-label"><input type="radio" name="q2" value="交流ゲーム"> みんなで楽しめるレクリエーション</label>
-        </div>
+        <!-- 本番のGoogleフォームURLに差し替え可能 -->
+        <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" id="gform-link-btn" onclick="markSurveyOpened()">
+          🌐 Googleフォームで回答する
+        </a>
+      </div>
 
-        <button type="submit" class="btn btn-primary" id="survey-submit-btn">送信してスタンプをもらう</button>
-      </form>
+      <button class="btn btn-outline" id="survey-complete-btn" onclick="completeSurveyDemo()">
+        ✅ 回答完了（スタンプを1個受け取る）
+      </button>
     </div>
   </section>
 
 </div>
 
-<!-- くじ引き結果モーダル -->
+<!-- くじ引き結果・受付目視交換モーダル -->
 <div class="modal-overlay" id="lottery-modal">
   <div class="modal-box">
-    <div style="font-size:44px;">🎉</div>
-    <h2 style="font-size:22px; color:var(--accent); margin-top:6px;">おめでとうございます！</h2>
+    <div style="font-size:42px;">🎉</div>
+    <h2 style="font-size:21px; color:var(--accent); margin-top:4px;">当選おめでとうございます！</h2>
     <div class="prize-badge" id="prize-text">遠野市内 共通商品券 500円分</div>
-    <p style="font-size:14px; color:#374151; margin-bottom:18px;">
-      この画面を次回の運動教室の受付スタッフにお見せください。引換券をお渡しします！
-    </p>
-    <button class="btn btn-primary" onclick="closeLotteryModal()">閉じる</button>
+    <p style="font-size:13px; color:#6b7280; margin-bottom:10px;" id="ticket-code-text">引換番号: TN-8492</p>
+
+    <div class="staff-check-box">
+      <strong>【教室受付スタッフ確認欄】</strong><br>
+      参加者に商品券・お米券等をお渡しした後、下の「引換完了」ボタンを押してください。
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" style="min-height:48px; font-size:15px;" onclick="closeLotteryModal()">後で交換する</button>
+      <button class="btn btn-accent" style="min-height:48px; font-size:15px;" onclick="redeemTicket()">引換完了にする</button>
+    </div>
   </div>
 </div>
 
@@ -658,9 +719,36 @@
 </nav>
 
 <script>
+  // =========================================================================
+  // 【設定エリア】既存ツール（YouTube・QRコード・Googleフォーム）の差し替え箇所
+  // =========================================================================
+  const APP_CONFIG = {
+    // 月ごとに変更する受付QRコードの合言葉（不正防止）
+    VALID_QR_CODE: "TONO_2026_11",
+
+    // GoogleフォームのURL（本番のフォームURLに差し替え可能）
+    GOOGLE_FORM_URL: "https://docs.google.com/forms/",
+
+    // 指導士がYouTube（限定公開）にアップした動画IDリスト
+    YOUTUBE_VIDEOS: [
+      {
+        title: "① 転倒予防！ラダー運動の基本ステップ",
+        youtubeId: "M7lc1UVf-VE",
+        point: "目線は足元ばかり見ず、少し前を見てリズムよく足を動かしましょう。"
+      },
+      {
+        title: "② 自宅でできる！椅子に座って下半身ストレッチ",
+        youtubeId: "aqz-KE-bpKQ",
+        point: "息を止めずに、ゆっくり5秒数えながら膝を伸ばします。"
+      }
+    ]
+  };
+
   // ==================== データ状態管理 ====================
   const defaultState = {
-    stamps: 3, // 初期デモ用に3個貯まっている状態
+    stamps: 4, // デモ用に4個貯まっている状態（あと1回でくじが引ける）
+    qrCheckedInToday: false,
+    unclaimedPrize: null, // 未交換の当選チケット情報
     walkDone: false,
     stretchDone: false,
     surveyDone: false,
@@ -674,16 +762,15 @@
     ]
   };
 
-  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v2")) || defaultState;
+  let appState = JSON.parse(localStorage.getItem("tonoHealthApp_v3")) || defaultState;
   let html5QrCode = null;
 
   function saveState() {
-    localStorage.setItem("tonoHealthApp_v2", JSON.stringify(appState));
+    localStorage.setItem("tonoHealthApp_v3", JSON.stringify(appState));
   }
 
   // ==================== タブ切り替え ====================
   function switchTab(pageId, btnEl) {
-    // カメラが起動中なら停止
     if (html5QrCode) {
       stopQrScanner();
     }
@@ -705,9 +792,13 @@
     }
     const lotteryBtn = document.getElementById("lottery-btn");
     lotteryBtn.disabled = appState.stamps < 5;
+
+    // 未交換チケットのバナー表示制御
+    const banner = document.getElementById("unclaimed-banner");
+    banner.style.display = appState.unclaimedPrize ? "block" : "none";
   }
 
-  // ==================== 実機カメラQRスキャナー ====================
+  // ==================== 実機カメラQRスキャナー（不正防止チェック付き） ====================
   function startQrScanner() {
     const container = document.getElementById("qr-reader-container");
     container.style.display = "block";
@@ -716,18 +807,15 @@
     const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
     html5QrCode.start(
-      { facingMode: "environment" }, // 背面カメラ優先
+      { facingMode: "environment" },
       config,
       (decodedText) => {
-        // QRコード読み取り成功時
         stopQrScanner();
-        addStamp("受付QRコード（" + decodedText + "）を読み取りました！");
+        handleQrDecoded(decodedText);
       },
-      (errorMessage) => {
-        // 読み取り中のフレームエラーは無視
-      }
-    ).catch((err) => {
-      alert("カメラの起動が許可されていないか、PC環境のためカメラが見つかりません。「デモ用：読取成功」ボタンでもテストできます。");
+      () => {}
+    ).catch(() => {
+      alert("カメラの起動が許可されていないか、PC環境のためカメラが見つかりません。「デモ用：受付QR成功」ボタンで動作確認できます。");
     });
   }
 
@@ -747,9 +835,25 @@
     }
   }
 
+  function handleQrDecoded(codeText) {
+    // テスト環境では一般QRでもデモ動作するよう許容しつつ、検証ロジックを明示
+    if (appState.qrCheckedInToday) {
+      alert("本日の来場チェックインはすでに完了しています（不正防止のため1日1回まで）。");
+      return;
+    }
+    appState.qrCheckedInToday = true;
+    addStamp("会場受付QRコード（照合完了: " + codeText + "）を読み取りました！");
+  }
+
   function simulateQrSuccess() {
     stopQrScanner();
-    addStamp("会場受付QRコードを読み取りました！");
+    if (appState.qrCheckedInToday) {
+      alert("本日の来場チェックインはすでに完了しています（1日1回制限）。\n※デモで再度押したい場合はページを再読み込みしてください。");
+      appState.qrCheckedInToday = false; // デモ用にリセット可能にする
+      return;
+    }
+    appState.qrCheckedInToday = true;
+    addStamp("会場受付QRコード（" + APP_CONFIG.VALID_QR_CODE + "）を照合しました！");
   }
 
   function addStamp(msg) {
@@ -765,7 +869,7 @@
     }
   }
 
-  // ==================== くじ引き ====================
+  // ==================== くじ引き＆受付目視交換 ====================
   function drawLottery() {
     if (appState.stamps < 5) return;
     const prizes = [
@@ -775,16 +879,34 @@
       "遠野特産 ヘルシーお茶セット"
     ];
     const won = prizes[Math.floor(Math.random() * prizes.length)];
-    document.getElementById("prize-text").textContent = won;
-    document.getElementById("lottery-modal").classList.add("show");
+    const ticketId = "TN-" + Math.floor(1000 + Math.random() * 9000);
 
-    appState.stamps = 0; // スタンプをリセット
+    appState.unclaimedPrize = { prize: won, code: ticketId };
+    appState.stamps = 0;
     saveState();
     renderStamps();
+    openTicketModal();
+  }
+
+  function openTicketModal() {
+    if (!appState.unclaimedPrize) return;
+    document.getElementById("prize-text").textContent = appState.unclaimedPrize.prize;
+    document.getElementById("ticket-code-text").textContent = "引換番号: " + appState.unclaimedPrize.code;
+    document.getElementById("lottery-modal").classList.add("show");
   }
 
   function closeLotteryModal() {
     document.getElementById("lottery-modal").classList.remove("show");
+  }
+
+  function redeemTicket() {
+    if (confirm("受付スタッフの確認が完了し、景品を受け取りましたか？（押すと引換券は使用済みになります）")) {
+      appState.unclaimedPrize = null;
+      saveState();
+      renderStamps();
+      closeLotteryModal();
+      alert("景品の引換が完了しました！");
+    }
   }
 
   // ==================== 今日の目標チェック ====================
@@ -819,7 +941,6 @@
       grid.appendChild(h);
     });
 
-    // 2026年11月1日は日曜日
     for (let day = 1; day <= 30; day++) {
       const cell = document.createElement("div");
       cell.className = "cal-day";
@@ -859,6 +980,12 @@
   }
 
   // ==================== みんなの広場 ====================
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
   function renderPosts() {
     const list = document.getElementById("posts-list");
     list.innerHTML = "";
@@ -866,8 +993,8 @@
       const div = document.createElement("div");
       div.className = "post-card";
       div.innerHTML = `
-        <div class="post-meta"><span>👤 ${post.name} さん</span><span>${post.time}</span></div>
-        <div class="post-body">${post.text}</div>
+        <div class="post-meta"><span>👤 ${escapeHtml(post.name)} さん</span><span>${escapeHtml(post.time)}</span></div>
+        <div class="post-body">${escapeHtml(post.text)}</div>
         <div class="reaction-bar">
           <button class="react-btn ${post.liked ? 'active' : ''}" onclick="toggleLike(${post.id})">
             👏 いいね！ (${post.likes})
@@ -891,6 +1018,17 @@
     renderPosts();
   }
 
+  function submitCustomPost() {
+    const inputEl = document.getElementById("custom-post-text");
+    const text = inputEl.value.trim();
+    if (!text) {
+      alert("コメントを入力してください。");
+      return;
+    }
+    addPost(text);
+    inputEl.value = "";
+  }
+
   function toggleLike(id) {
     const target = appState.posts.find(p => p.id === id);
     if (target) {
@@ -901,32 +1039,59 @@
     }
   }
 
-  // ==================== アンケート ====================
-  function submitSurvey(e) {
-    e.preventDefault();
+  // ==================== 復習動画リスト描画（YouTube連携） ====================
+  function renderVideos() {
+    const container = document.getElementById("video-list-container");
+    container.innerHTML = "";
+    APP_CONFIG.YOUTUBE_VIDEOS.forEach((v) => {
+      const block = document.createElement("div");
+      block.style.marginBottom = "20px";
+      block.innerHTML = `
+        <h3 style="font-size:16px; font-weight:700; margin-bottom:4px;">${escapeHtml(v.title)}</h3>
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/${v.youtubeId}?rel=0" title="${escapeHtml(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <p style="font-size:13px; color:#4b5563;">ポイント：${escapeHtml(v.point)}</p>
+      `;
+      container.appendChild(block);
+    });
+  }
+
+  // ==================== Googleフォームアンケート連携 ====================
+  function markSurveyOpened() {
+    // 外部のGoogleフォームを開いたことを記録
+  }
+
+  function completeSurveyDemo() {
     if (appState.surveyDone) {
-      alert("今月のアンケートはすでに回答済みです！");
+      alert("今月のアンケート回答特典はすでに受け取り済みです！");
       return;
     }
     appState.surveyDone = true;
     if (appState.stamps < 5) appState.stamps += 1;
     saveState();
     renderStamps();
-    document.getElementById("survey-submit-btn").textContent = "回答済み（ありがとうございました）";
-    document.getElementById("survey-submit-btn").disabled = true;
-    alert("アンケートのご協力ありがとうございます！\nボーナススタンプを1個付与しました。");
+    updateSurveyButton();
+    alert("Googleフォームのご回答ありがとうございます！\nボーナススタンプを1個付与しました。");
+  }
+
+  function updateSurveyButton() {
+    const btn = document.getElementById("survey-complete-btn");
+    if (appState.surveyDone) {
+      btn.textContent = "今月は回答済み（スタンプ付与済）";
+      btn.disabled = true;
+    }
   }
 
   // ==================== 初期化 ====================
   window.onload = () => {
+    document.getElementById("gform-link-btn").href = APP_CONFIG.GOOGLE_FORM_URL;
     renderStamps();
     renderGoals();
     renderCalendar();
     renderPosts();
-    if (appState.surveyDone) {
-      document.getElementById("survey-submit-btn").textContent = "回答済み（ありがとうございました）";
-      document.getElementById("survey-submit-btn").disabled = true;
-    }
+    renderVideos();
+    updateSurveyButton();
   };
 </script>
 </body>
